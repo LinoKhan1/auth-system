@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Auth System Full-Stack Project
 
-## Getting Started
+A **full-stack authentication system** built with **Next.js (TypeScript)** for the frontend and **ASP.NET Core Web API (C#)** for the backend, using **PostgreSQL** as the database. The backend is fully Dockerized, while the frontend runs locally during development.
 
-First, run the development server:
+This project demonstrates:
+
+- User registration and login
+- User Details View
+- JWT-based authentication
+- Secure password storage (BCrypt)
+- Protected routes in frontend
+- Dockerized backend + PostgreSQL
+- Clean, production-ready architecture
+
+---
+
+## 🏗 Project Structure
+
+auth-system/
+├── client/ # Next.js frontend (TypeScript)
+│ ├── app/
+│ │ ├── login/
+│ │ ├── register/
+│ │ └── user/
+│ ├── feature/
+│ │ ├── auth/ (components, hooks, services, types)
+│ │ └── user/ (components, services, types)
+│ └── libs/ (apiClient.ts, logger.ts)
+├── server/ # ASP.NET Core Web API backend (C#)
+│ ├── Presentation/ (controllers, dtos, mappings)
+│ ├── Application/ (interfaces, services)
+│ ├── Domain/ (entities)
+│ └── Infrastructure/ (data, authentication, repository)
+├── docker-compose.yml # Backend + PostgreSQL orchestration
+└── README.md
+
+
+---
+
+## 🖥 Frontend (Next.js)
+
+### Features
+
+- Registration page: first name, last name, email, password
+- Login page: email + password
+- User page: displays first name, last name, email (protected)
+- Axios client configured for API requests
+- Middleware protects routes requiring authentication
+
+### Run Frontend
 
 ```bash
+cd client
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+## Backend (ASP.NET Core Web API)
+
+### Features
+
+- Register user (hashes password with BCrypt)
+- Login user (validates credentials and issues JWT)
+- JWT stored in HTTP-only cookie
+- Protected endpoint /api/users/me returns authenticated user details
+- PostgreSQL database for user storage
+- EF Core migrations for database schema
+- Clean architecture: Presentation → Application → Domain → Infrastructure
+
+### Run Backend
+```bash
+Build and start backend + PostgreSQL using Docker:
+docker compose up --build
+API will be available at http://localhost:5000.
+Swagger UI available at http://localhost:5000/swagger.
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Set in docker-compose.yml:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+ASPNETCORE_ENVIRONMENT=""
+ConnectionStrings__DefaultConnection=""
+Jwt__Secret=""
+POSTGRES_USER=""
+POSTGRES_PASSWORD=""
+POSTGRES_DB=""
+```
 
-## Learn More
+### Authentication Flow
 
-To learn more about Next.js, take a look at the following resources:
+- User registers via /register → backend hashes password and stores in DB.
+- User logs in via /login → backend validates credentials → issues JWT → stored in HTTP-only cookie.
+- Protected endpoint /users/me → backend validates JWT → returns user info.
+- Frontend middleware ensures only authenticated users can access protected pages.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Docker Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+docker-compose.yml includes:
 
-## Deploy on Vercel
+- api: ASP.NET Core backend
+- postgres: PostgreSQL database
+- Backend listens on port 5000.
+- PostgreSQL listens on port 5432.
+- Volume pgdata persists DB data.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Technologies Used
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Frontend:
+
+- Next.js 16+
+- TypeScript
+- Axios
+- React Hooks
+
+### Backend:
+
+- ASP.NET Core 10
+- C#
+- Entity Framework Core
+- PostgreSQL
+- JWT Authentication
+- BCrypt for password hashing
+- Docker
+
+### Tools:
+
+- VS Code
+- Docker Desktop
+- Postman (for API testing)
+
+## Testing
+
+- Unit tests: AuthService, UserService, JWT generation
+- Integration tests (optional): registration → login → protected endpoint
+- Frontend tests can use Jest + React Testing Library
+
+## Development Workflow
+
+```bash
+Start backend & DB in Docker:
+docker compose up --build
+Start frontend locally:
+cd client
+npm run dev
+Access frontend at http://localhost:3000.
+Use Postman or frontend UI to test registration, login, and protected routes.
+```
+
+## Production Considerations
+
+- Store secrets in environment variables or secret managers
+- Enable HTTPS and secure cookies
+- Configure proper CORS settings for production domains
+- Consider containerizing frontend for full Docker deployment
+

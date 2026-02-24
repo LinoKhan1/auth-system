@@ -1,0 +1,62 @@
+# =====================================
+# Visual Studio / VS Code / .NET Core
+# =====================================
+
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code settings
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Rider IDE
+.idea/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+
+# ASP.NET Core specific
+appsettings.*.json  # optional, if you keep secrets outside
+secrets.json        # for dotnet user-secrets
+
+# Publish folder
+publish/
+out/
+
+# Entity Framework Core
+Migrations/*.Designer.cs
+Migrations/*.resx
+Migrations/ModelSnapshot.cs  # optional if auto-generated
+
+# Docker
+docker-compose.override.yml
+docker-compose.override.*.yml
+*.env  # if you store env files in repo; better to keep secrets out
+
+# Test / coverage
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+.vstest/
+*.vsmdi
+
+# Others
+*.pidb
+*.svclog
+*.pdb
