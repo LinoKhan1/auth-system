@@ -1,41 +1,98 @@
+// server/Program.cs
+
+using server.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using server.Presentation.Mappings;
+using server.Infrastructure.Repository.Interfaces;
+using server.Infrastructure.Repository;
+using server.Application.Services;
+using server.Application.Interfaces;
+using server.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ============================
+// Configuration
+// ============================
+var configuration = builder.Configuration;
+
+// Bind JwtSettings from appsettings.json
+var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? throw new InvalidOperationException("JwtSettings not found in configuration.");
+
+builder.Services.AddSingleton(jwtSettings);
+
+// ============================
+// Add services to the container
+// ============================
+
+// Add DbContext (PostgreSQL)
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(cfg=>
+{
+    cfg.AddProfile<MappingProfile>();
+});
+// Add Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Add Services
+builder.Services.AddScoped<IJwtAuthService, JwtAuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Configure JWT Authentication
+var key = Encoding.ASCII.GetBytes(jwtSettings.SecretKey);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // true in production
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtSettings.Audience,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// Add Controllers
+builder.Services.AddControllers();
+
+// Configure Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ============================
+// Configure middleware pipeline
+// ============================
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Enable authentication middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
