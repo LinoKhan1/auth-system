@@ -11,6 +11,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=authdb;Username=postgres;Password=adonb_nahk@9991 Path=auth"
+      JwtSettings__SecretKey: "a0c022bf03a0df483ebd73cb5aef5c70"
+      JwtSettings__Issuer: "AuthServer"
+      JwtSettings__Audience: "AuthClient" 
+      JwtSettings__ExpireHours: "1"
     depends_on:
       - postgres
   postgres:
