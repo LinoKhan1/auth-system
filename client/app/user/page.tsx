@@ -39,10 +39,6 @@ export default function UserDetailsPage() {
           <p><strong>ID:</strong> {user.id}</p>
           <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
           <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Created At:</strong> {new Date(user.createdAt).toLocaleString()}</p>
-          {user.updatedAt && (
-            <p><strong>Updated At:</strong> {new Date(user.updatedAt).toLocaleString()}</p>
-          )}
         </div>
       </div>
     </div>

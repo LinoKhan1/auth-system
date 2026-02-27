@@ -77,7 +77,7 @@ export default function RegisterPage() {
           >
             {loading ? 'Registering...' : 'Register'}
           </button>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Already have an account?{' '}

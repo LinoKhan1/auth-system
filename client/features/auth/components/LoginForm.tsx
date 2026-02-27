@@ -45,7 +45,7 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Email"
-              className="mt-1 w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+              className="mt-1 w-full px-3 py-2 border rounded "
             />
           </div>
           <div>
@@ -56,7 +56,7 @@ export default function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Password"
-              className="mt-1 w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+              className="mt-1 w-full px-3 py-2 border rounded "
             />
           </div>
           <button
@@ -66,7 +66,7 @@ export default function LoginForm() {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Don’t have an account?{" "}
