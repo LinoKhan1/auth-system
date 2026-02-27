@@ -1,4 +1,3 @@
-// server/Services/JwtAuthService.cs
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -12,16 +11,24 @@ namespace server.Application.Services
     public class JwtAuthService : IJwtAuthService
     {
         private readonly JwtSettings _jwtSettings;
+        private readonly ILogger<JwtAuthService> _logger;
 
-        public JwtAuthService(JwtSettings jwtSettings)
+        // Constructor with ILogger injection
+        public JwtAuthService(JwtSettings jwtSettings, ILogger<JwtAuthService> logger)
         {
             _jwtSettings = jwtSettings;
+            _logger = logger;
         }
 
+        // -------------------------
+        // GENERATE JWT TOKEN
+        // -------------------------
         public string GenerateToken(User user)
         {
             try
             {
+                _logger.LogInformation("Generating JWT token for user {UserId} ({Email})", user.Id, user.Email);
+
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
 
@@ -43,12 +50,17 @@ namespace server.Application.Services
                     )
                 };
 
+                // Create token
                 var token = tokenHandler.CreateToken(tokenDescriptor);
-                return tokenHandler.WriteToken(token);
+                var jwt = tokenHandler.WriteToken(token);
+
+                _logger.LogInformation("JWT token generated successfully for user {UserId}", user.Id);
+
+                return jwt;
             }
             catch (Exception ex)
             {
-                // Log or handle exception
+                _logger.LogError(ex, "Failed to generate JWT token for user {UserId} ({Email})", user.Id, user.Email);
                 throw new Exception("Error generating JWT token", ex);
             }
         }
