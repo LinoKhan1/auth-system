@@ -23,7 +23,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: adonb_nahk@9991
+      POSTGRES_PASSWORD: AdonbNahk1#
       POSTGRES_DB: authdb
     ports:
       - "5432:5432"

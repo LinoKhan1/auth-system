@@ -4,20 +4,29 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import Link from "next/link";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  userId: string;
+  sub?: string;
+}
 
 export default function LoginForm() {
+
   const router = useRouter();
   const { login, loading, error } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     try {
       const loginData = await login({ email, password });
+      const token = loginData.token;
+      const decoded = jwtDecode<JwtPayload>(token);
+      const userId = decoded.userId || decoded.sub;
       // Redirect to user details page after successful login
-      router.push(`/user/${loginData.user.id}`);
+      console.log("Redirecting to user details page for user ID:", userId);
+      router.push("/user");
     } catch (err) {
       console.error(err);
     }

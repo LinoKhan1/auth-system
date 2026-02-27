@@ -4,13 +4,13 @@ import { RegisterRequest, LoginRequest, UserResponse, LoginResponse } from '../t
 
 const authService = {
   register: async (data: RegisterRequest): Promise<UserResponse> => {
-    const response = await apiClient.post<UserResponse>('/auth/register', data);
+    const response = await apiClient.post<UserResponse>('/Auth/register', data);
     return response.data;
   },
 
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', data);
-    localStorage.setItem('token', response.data.token);
+    const response = await apiClient.post<LoginResponse>('/Auth/login', data);
+    localStorage.setItem('token', response.data.token); // store token
     return response.data;
   },
 
@@ -18,15 +18,15 @@ const authService = {
     localStorage.removeItem('token');
   },
 
+  // Only one method to get user by ID
   getUser: async (id: string): Promise<UserResponse> => {
-    const response = await apiClient.get<UserResponse>(`/auth/user/${id}`);
-    return response.data;
-  },
-
-  getCurrentUserId: (): string | null => {
     const token = localStorage.getItem('token');
-    if (!token) return null;
-    return null; // optionally decode JWT to get userId
+    if (!token) throw new Error('No token found');
+
+    const response = await apiClient.get<UserResponse>(`/Auth/user/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
   }
 };
 

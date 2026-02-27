@@ -1,28 +1,33 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // App Router v13+
+import { useRouter } from "next/navigation";
+import {jwtDecode} from "jwt-decode";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserResponse } from "@/features/auth/types/auth.types";
 
-export default function UserDetailsPage({ params }: { params: { id: string } }) {
+interface JwtPayload {
+  sub: string; // assuming token contains user ID in `sub`
+}
+
+export default function UserDetailsPage() {
   const router = useRouter();
-  const { fetchUser, getToken } = useAuth(); // useAuth provides a method to get token
+  const { fetchUser, getToken } = useAuth();
   const [user, setUser] = useState<UserResponse | null>(null);
 
   useEffect(() => {
-    const token = getToken(); // get token from hook or localStorage
-
-    // Redirect to login if no token
+    const token = getToken();
     if (!token) {
       router.push("/login");
       return;
     }
 
-    fetchUser(params.id)
+    // Decode JWT to get ID
+    const { sub: userId } = jwtDecode<JwtPayload>(token);
+
+    fetchUser(userId)
       .then(setUser)
       .catch(() => router.push("/login"));
-  }, [params.id, router, getToken]);
+  }, [fetchUser, getToken, router]);
 
   if (!user) return <p className="text-center mt-10">Loading user details...</p>;
 
