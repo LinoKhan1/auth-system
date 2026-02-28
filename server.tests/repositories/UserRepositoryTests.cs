@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
 using server.Domain.Entities;
 using server.Infrastructure.Repository;
 using server.tests.repositories.configuration;
@@ -14,7 +16,8 @@ namespace server.tests.repositories
         public UserRepositoryTests(DbContextFixture fixture)
         {
             _fixture = fixture;
-            _repository = new UserRepository(_fixture.Context);
+            var loggerMock = new Mock<ILogger<UserRepository>>();
+            _repository = new UserRepository(_fixture.Context, loggerMock.Object);
         }
 
         [Fact]

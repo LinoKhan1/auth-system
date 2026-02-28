@@ -1,45 +1,52 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {jwtDecode} from "jwt-decode";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { UserResponse } from "@/features/auth/types/auth.types";
 
-interface JwtPayload {
-  sub: string; // assuming token contains user ID in `sub`
-}
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export default function UserDetailsPage() {
   const router = useRouter();
-  const { fetchUser, getToken } = useAuth();
-  const [user, setUser] = useState<UserResponse | null>(null);
+  const { user, fetchUser, loading, logout } = useAuth();
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push("/login");
-      return;
+    // Only fetch user if not already loaded
+    if (!user) {
+      fetchUser().catch(() => {
+        router.replace("/login"); // redirect if not authenticated
+      });
     }
+  }, [user, fetchUser, router]);
 
-    // Decode JWT to get ID
-    const { sub: userId } = jwtDecode<JwtPayload>(token);
+  if (loading) {
+    return <p className="text-center mt-10">Loading...</p>;
+  }
 
-    fetchUser(userId)
-      .then(setUser)
-      .catch(() => router.push("/login"));
-  }, [fetchUser, getToken, router]);
+  if (!user) {
+    return null; // waiting for fetch or redirect
+  }
 
-  if (!user) return <p className="text-center mt-10">Loading user details...</p>;
-
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace("/login"); // redirect after logout
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded shadow">
         <h1 className="text-2xl font-bold mb-6 text-center">User Details</h1>
-        <div className="space-y-2">
-          <p><strong>ID:</strong> {user.id}</p>
-          <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-        </div>
+
+        <p><strong>ID:</strong> {user.id}</p>
+        <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
+        <p><strong>Email:</strong> {user.email}</p>
+        <button
+          onClick={handleLogout}
+          className="mt-6 w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

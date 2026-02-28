@@ -1,34 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import Link from "next/link";
-import { jwtDecode } from "jwt-decode";
-
-interface JwtPayload {
-  userId: string;
-  sub?: string;
-}
 
 export default function LoginForm() {
-
   const router = useRouter();
-  const { login, loading, error } = useAuth();
+  const { login, fetchUser, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     try {
-      const loginData = await login({ email, password });
-      const token = loginData.token;
-      const decoded = jwtDecode<JwtPayload>(token);
-      const userId = decoded.userId || decoded.sub;
-      // Redirect to user details page after successful login
-      console.log("Redirecting to user details page for user ID:", userId);
-      router.push("/user");
+      // Login (sets HttpOnly cookie)
+      await login({ email, password });
+
+      // Fetch the current user from backend
+      const currentUser = await fetchUser();
+
+      if (currentUser) {
+        router.push("/user"); // redirect after successful fetch
+      } else {
+        console.error("Failed to fetch user after login");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Login failed:", err);
     }
   };
 
@@ -45,7 +44,7 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Email"
-              className="mt-1 w-full px-3 py-2 border rounded "
+              className="mt-1 w-full px-3 py-2 border rounded"
             />
           </div>
           <div>
@@ -56,7 +55,7 @@ export default function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Password"
-              className="mt-1 w-full px-3 py-2 border rounded "
+              className="mt-1 w-full px-3 py-2 border rounded"
             />
           </div>
           <button

@@ -1,3 +1,4 @@
+// services/authService.ts
 import apiClient from '@/libs/apiClient';
 import { RegisterRequest, LoginRequest, UserResponse, LoginResponse } from '../types/auth.types';
 
@@ -8,48 +9,50 @@ const authService = {
     try {
       const response = await apiClient.post<UserResponse>('/Auth/register', data);
       return response.data;
-    } catch (err: any) {
-      console.error('Register failed', err);
-      throw new Error(err?.response?.data?.message || err.message || 'Register failed');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Register failed';
+      console.error('Register failed:', message);
+      ;
+      throw new Error(message);
     }
   },
 
-  // Login an existing user
+  // Login an existing user (server sets session cookie)
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     try {
       const response = await apiClient.post<LoginResponse>('/Auth/login', data);
-      localStorage.setItem('token', response.data.token); // store token
       return response.data;
-    } catch (err: any) {
-      console.error('Login failed', err);
-      throw new Error(err?.response?.data?.message || err.message || 'Login failed');
-    }
-  },
-
-  // Logout the user by removing the token
-  logout: () => {
-    try {
-      localStorage.removeItem('token');
     } catch (err) {
-      console.error('Logout failed', err);
+      const message = err instanceof Error ? err.message : 'Login failed';
+      console.error('Login failed:', message);
+      throw new Error(message);
     }
   },
 
-  // Get user details by ID
-  getUser: async (id: string): Promise<UserResponse> => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) throw new Error('No token found');
 
-      const response = await apiClient.get<UserResponse>(`/Auth/user/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (err: any) {
-      console.error('GetUser failed', err);
-      throw new Error(err?.response?.data?.message || err.message || 'GetUser failed');
+  // Logout the user (server clears session cookie)
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/Auth/logout');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Logout failed';
+      console.error('Logout failed:', message);
     }
-  }
+  },
+
+
+  // Get user details by ID (server uses session cookie)
+  getUser: async (): Promise<UserResponse> => {
+    try {
+      const response = await apiClient.get<UserResponse>("/Auth/user/me");
+      return response.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch user';
+      console.error('GetUser failed:', message);
+      throw new Error(message);
+    }
+  },
 };
+
 
 export default authService;

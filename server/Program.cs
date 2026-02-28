@@ -21,19 +21,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins("http://localhost:3000") 
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); 
-    }); 
+              .AllowCredentials();
+    });
 });
+
 // ============================
 // Configuration
 // ============================
 var configuration = builder.Configuration;
 
 // Bind JwtSettings from appsettings.json
-var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? throw new InvalidOperationException("JwtSettings not found in configuration.");
+var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>() 
+                  ?? throw new InvalidOperationException("JwtSettings not found in configuration.");
 
 builder.Services.AddSingleton(jwtSettings);
 
@@ -46,10 +48,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
 // Add AutoMapper
-builder.Services.AddAutoMapper(cfg=>
+builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<MappingProfile>();
 });
+
 // Add Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
@@ -57,7 +60,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IJwtAuthService, JwtAuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// ============================
 // Configure JWT Authentication
+// ============================
 var key = Encoding.ASCII.GetBytes(jwtSettings.SecretKey);
 
 builder.Services.AddAuthentication(options =>
@@ -69,6 +74,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.RequireHttpsMetadata = false; // true in production
     options.SaveToken = true;
+
+    // --- Token validation parameters ---
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -79,6 +86,20 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings.Audience,
         ClockSkew = TimeSpan.Zero
     };
+
+    // --- NEW: Read JWT from cookie for localhost dev ---
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Cookies["jwt"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // Add Controllers
@@ -88,13 +109,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 var app = builder.Build();
 
 // ============================
 // Configure middleware pipeline
 // ============================
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -112,4 +131,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

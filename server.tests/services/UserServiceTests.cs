@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using server.Application.Interfaces;
 using server.Application.Services;
@@ -14,6 +15,7 @@ namespace server.tests.Services
         private readonly Mock<IUserRepository> _repoMock = new();
         private readonly Mock<IJwtAuthService> _jwtMock = new();
         private readonly Mock<IMapper> _mapperMock = new();
+        private readonly Mock<ILogger<UserService>> _loggerMock = new();
         private readonly UserService _service;
 
         public UserServiceTests()
@@ -21,7 +23,8 @@ namespace server.tests.Services
             _service = new UserService(
                 _repoMock.Object,
                 _jwtMock.Object,
-                _mapperMock.Object
+                _mapperMock.Object,
+                _loggerMock.Object
             );
         }
 

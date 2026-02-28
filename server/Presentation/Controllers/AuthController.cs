@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using server.Presentation.DTOs;
 using server.Application.Interfaces;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace server.Presentation.Controllers
 {
@@ -51,6 +52,13 @@ namespace server.Presentation.Controllers
             try
             {
                 var token = await _userService.LoginAsync(request);
+                Response.Cookies.Append("jwt", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false, // Set to true in production with HTTPS
+                    SameSite = SameSiteMode.Lax,
+                    Path = "/"
+                });
                 _logger.LogInformation("User logged in successfully: {Email}", request.Email);
                 return Ok(new { token });
             }
@@ -62,31 +70,68 @@ namespace server.Presentation.Controllers
         }
 
         // -------------------------
+        // LOGOUT USER
+        // -------------------------
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            _logger.LogInformation("Logout endpoint called");
+
+            Response.Cookies.Delete("jwt", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // Set to true in production with HTTPS
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            });
+
+            _logger.LogInformation("User logged out successfully");
+            return Ok(new { message = "Logged out successfully" });
+        }
+
+      
+        // -------------------------
         // GET USER BY ID (JWT REQUIRED)
         // -------------------------
         [Authorize]
-        [HttpGet("user/{id}")]
-        public async Task<IActionResult> GetUserById(Guid id)
+        [HttpGet("user/me")]
+        public async Task<IActionResult> GetCurrentUser()
         {
-            _logger.LogInformation("GetUserById endpoint called for user {UserId}", id);
+            _logger.LogInformation("GetCurrentUser endpoint called");
 
             try
             {
-                var user = await _userService.GetUserByIdAsync(id);
+                // Use ClaimTypes instead of JwtRegisteredClaimNames
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    _logger.LogWarning("User ID claim not found in token");
+                    return Unauthorized(new { message = "Invalid token" });
+                }
+                if (!Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    _logger.LogWarning("Invalid User ID format in token: {UserId}", userIdClaim);
+                    return Unauthorized(new { message = "Invalid token" });
+                }
+
+                var user = await _userService.GetUserByIdAsync(userId);
+
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", id);
+                    _logger.LogWarning("User not found: {UserId}", userId);
                     return NotFound(new { message = "User not found" });
                 }
 
-                _logger.LogInformation("User retrieved successfully: {UserId}", id);
+                _logger.LogInformation("User retrieved successfully: {UserId}", userId);
                 return Ok(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to fetch user {UserId}", id);
+                _logger.LogError(ex, "Failed to fetch user {UserId}", User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                 return BadRequest(new { message = ex.Message });
             }
         }
+
     }
 }

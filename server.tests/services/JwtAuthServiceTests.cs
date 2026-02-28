@@ -1,7 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Moq;
 using server.Application.Services;
 using server.Configuration;
 using server.Domain.Entities;
@@ -23,13 +26,13 @@ namespace server.tests.Services
                 ExpireHours = 1
             };
 
-            _service = new JwtAuthService(_jwtSettings);
+            var mockLogger = new Mock<ILogger<JwtAuthService>>();
+            _service = new JwtAuthService(_jwtSettings, mockLogger.Object);
         }
 
         [Fact]
         public void GenerateToken_ShouldReturnValidJwtToken()
         {
-            // Arrange
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -38,10 +41,8 @@ namespace server.tests.Services
                 LastName = "Khan"
             };
 
-            // Act
             var token = _service.GenerateToken(user);
 
-            // Assert
             token.Should().NotBeNullOrEmpty();
         }
 
@@ -62,19 +63,19 @@ namespace server.tests.Services
             var jwtToken = tokenHandler.ReadJwtToken(token);
 
             jwtToken.Claims.Should().Contain(c =>
-                c.Type == JwtRegisteredClaimNames.Sub &&
+                c.Type == ClaimTypes.NameIdentifier &&
                 c.Value == user.Id.ToString());
 
             jwtToken.Claims.Should().Contain(c =>
-                c.Type == JwtRegisteredClaimNames.Email &&
+                c.Type == ClaimTypes.Email &&
                 c.Value == user.Email);
 
             jwtToken.Claims.Should().Contain(c =>
-                c.Type == JwtRegisteredClaimNames.GivenName &&
+                c.Type == ClaimTypes.GivenName &&
                 c.Value == user.FirstName);
 
             jwtToken.Claims.Should().Contain(c =>
-                c.Type == JwtRegisteredClaimNames.FamilyName &&
+                c.Type == ClaimTypes.Surname &&
                 c.Value == user.LastName);
         }
 
@@ -146,7 +147,7 @@ namespace server.tests.Services
                 ClockSkew = TimeSpan.Zero
             };
 
-            var act = () =>
+            Action act = () =>
                 tokenHandler.ValidateToken(token, validationParameters, out _);
 
             act.Should().NotThrow();

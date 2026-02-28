@@ -13,7 +13,6 @@ namespace server.Application.Services
         private readonly JwtSettings _jwtSettings;
         private readonly ILogger<JwtAuthService> _logger;
 
-        // Constructor with ILogger injection
         public JwtAuthService(JwtSettings jwtSettings, ILogger<JwtAuthService> logger)
         {
             _jwtSettings = jwtSettings;
@@ -36,10 +35,10 @@ namespace server.Application.Services
                 {
                     Subject = new ClaimsIdentity(new[]
                     {
-                        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                        new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                        new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
-                        new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName)
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim(ClaimTypes.Email, user.Email),
+                        new Claim(ClaimTypes.GivenName, user.FirstName),
+                        new Claim(ClaimTypes.Surname, user.LastName)
                     }),
                     Expires = DateTime.UtcNow.AddHours(_jwtSettings.ExpireHours),
                     Issuer = _jwtSettings.Issuer,

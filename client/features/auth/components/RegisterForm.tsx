@@ -1,7 +1,8 @@
 "use client";
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -16,7 +17,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-     await register({ firstName, lastName, email, password });
+      await register({ firstName, lastName, email, password });
       router.push("/login");
     } catch (err) {
       console.error(err);
