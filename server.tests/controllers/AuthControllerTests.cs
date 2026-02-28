@@ -197,8 +197,8 @@ namespace server.tests.Controllers
         {
             var userId = Guid.NewGuid();
 
-            _userServiceMock.Setup(s => s.GetUserByIdAsync(userId))
-                            .ReturnsAsync((UserResponse)null);
+           _userServiceMock.Setup(s => s.GetUserByIdAsync(userId))
+                .Returns(Task.FromResult<UserResponse?>(null));
 
             var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) };
             _controller.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims));

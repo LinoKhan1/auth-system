@@ -13,28 +13,29 @@ This project demonstrates:
 - Clean, production-ready architecture
 
 ---
-
-## 🏗 Project Structure
-
+``` bash
 auth-system/
-├── client/ # Next.js frontend (TypeScript)
-│ ├── app/
-│ │ ├── login/
-│ │ ├── register/
-│ │ └── user/
-│ ├── feature/
-│ │ ├── auth/ (components, hooks, services, types)
-│ │ └── user/ (components, services, types)
-│ └── libs/ (apiClient.ts, logger.ts)
-├── server/ # ASP.NET Core Web API backend (C#)
-│ ├── Presentation/ (controllers, dtos, mappings)
-│ ├── Application/ (interfaces, services)
-│ ├── Domain/ (entities)
-│ └── Infrastructure/ (data, authentication, repository)
-├── docker-compose.yml # Backend + PostgreSQL orchestration
+├── client/               # Next.js frontend (TypeScript)
+│   ├── app/
+│   │   ├── login/
+│   │   ├── register/
+│   │   └── user/
+│   ├── features/
+│   │   ├── auth/         # components, hooks, services, types, context
+│   │   └── user/         # components, services, types
+│   └── libs/             # apiClient.ts
+├── server/               # ASP.NET Core Web API backend (C#)
+│   ├── Presentation/     # controllers, dtos, mappings
+│   ├── Application/      # interfaces, services
+│   ├── Domain/           # entities
+│   └── Infrastructure/   # data, authentication, repository
+├── server.tests/         # unit tests for backend
+│   ├── Services/         # tests for Application services (e.g., JwtAuthService)
+│   ├── Repositories/     # tests for repositories (data access layer)
+│   └── Controllers/      # tests for API controllers (AuthController, etc.)
+├── docker-compose.yml    # Backend + PostgreSQL orchestration
 └── README.md
-
-
+```
 ---
 
 ## 🖥 Frontend (Next.js)
@@ -46,6 +47,11 @@ auth-system/
 - User page: displays first name, last name, email (protected)
 - Axios client configured for API requests
 - Middleware protects routes requiring authentication
+- Global authentication state via AuthContext:
+- Manages user, loading, and error state across all components
+- Provides register, login, logout, and fetchUser methods
+- Ensures authenticated pages redirect to login if user is not logged in
+- Session maintained using HTTP-only cookies set by the backend
 
 ### Run Frontend
 
@@ -100,7 +106,7 @@ docker-compose.yml includes:
 
 - api: ASP.NET Core backend
 - postgres: PostgreSQL database
-- Backend listens on port 5000.
+- Backend api listens on port 8080.
 - PostgreSQL listens on port 5432.
 - Volume pgdata persists DB data.
 
