@@ -144,8 +144,9 @@ Swagger UI available at http://localhost:8080/swagger.
 ```bash
 docker compose run --rm server dotnet ef database update --project server/server.csproj --startup-project server/server.csproj
 ```
-- **For Local**  
+- **For Local Testing outisde Docker**  
 ```bash
+cd server
 dotnet restore
 dotnet run
 ```
