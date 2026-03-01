@@ -65,7 +65,6 @@ export default function LoginForm() {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Don’t have an account?{" "}

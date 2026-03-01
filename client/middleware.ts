@@ -8,7 +8,7 @@ export function middleware(req: NextRequest) {
   const isAuthenticated = Boolean(sessionCookie);
 
   const isAuthPage =
-    pathname.startsWith("/login") || pathname.startsWith("/register");
+    pathname.startsWith("/login");
 
   const isProtectedPage = pathname.startsWith("/user");
 
