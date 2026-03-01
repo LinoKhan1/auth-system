@@ -11,7 +11,7 @@ using server.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.OpenApi;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,7 +75,6 @@ builder.Services.AddAuthentication(options =>
     options.RequireHttpsMetadata = false; // true in production
     options.SaveToken = true;
 
-    // --- Token validation parameters ---
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -87,7 +86,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-    // --- NEW: Read JWT from cookie for localhost dev ---
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -112,6 +110,15 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // ============================
+// Apply EF Migrations on Startup
+// ============================
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();  // <-- This applies any pending migrations automatically
+}
+
+// ============================
 // Configure middleware pipeline
 // ============================
 if (app.Environment.IsDevelopment())
@@ -119,12 +126,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else 
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors(MyAllowSpecificOrigins);
 
-app.UseHttpsRedirection();
-
-// Enable authentication middleware
 app.UseAuthentication();
 app.UseAuthorization();
 

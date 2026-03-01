@@ -1,23 +1,35 @@
-# Stage 1: Build the application
+# =========================
+# Stage 0: Build SDK & Restore
+# =========================
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy the .csproj from the server folder
+# Copy csproj and restore
 COPY ["server/server.csproj", "./"]
 RUN dotnet restore "server.csproj"
 
-# Copy all other source files from the server folder
+# Copy full source including migrations
 COPY server/. ./
-RUN dotnet build "server.csproj" -c Release -o /app/build
 
-# Stage 2: Publish the application
-FROM build AS publish
+# Build & publish (includes all folders in the assembly)
 RUN dotnet publish "server.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Stage 3: Run the application
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# =========================
+# Stage 1: Runtime (SDK for EF CLI)
+# =========================
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS final
 WORKDIR /app
 
+# Install EF CLI globally
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/root/.dotnet/tools"
+
 EXPOSE 8080
-COPY --from=publish /app/publish ./
+
+# Copy published app (includes the compiled Migrations assembly)
+COPY --from=build /app/publish ./
+
+# Optional: explicitly copy migrations folder in case EF needs it at runtime
+COPY server/Infrastructure/Data/Migrations ./Infrastructure/Data/Migrations
+
 ENTRYPOINT ["dotnet", "server.dll"]

@@ -47,7 +47,6 @@ Migrations/ModelSnapshot.cs  # optional if auto-generated
 docker-compose.override.yml
 docker-compose.override.*.yml
 *.env  # if you store env files in repo; better to keep secrets out
-
 # Test / coverage
 TestResults/
 *.coverage

@@ -10,11 +10,12 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=authdb;Username=postgres;Password=adonb_nahk@9991 Path=auth"
-      JwtSettings__SecretKey: "a0c022bf03a0df483ebd73cb5aef5c70"
-      JwtSettings__Issuer: "AuthServer"
-      JwtSettings__Audience: "AuthClient" 
-      JwtSettings__ExpireHours: "1"
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+      JwtSettings__SecretKey: "${JWT_SECRET_KEY}"
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__ExpireHours: "${JWT_EXPIRE_HOURS}"
     depends_on:
       - postgres
   postgres:
@@ -22,13 +23,13 @@ services:
     container_name: auth-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: AdonbNahk1#
-      POSTGRES_DB: authdb
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
     ports:
       - "5432:5432"
     volumes:
-      - pgdata18:/var/lib/postgresql/data
+      - pgdata18:/var/lib/postgresql
       - ./docker/postgres-init:/docker-entrypoint-initdb.d
 volumes:
   pgdata18:
