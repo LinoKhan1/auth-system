@@ -86,6 +86,7 @@ Set env variables:
 
 ```bash
 # Database
+DEFAULT_CONNECTION="" (for local testing in appsettings.json)
 DB_HOST=""
 DB_PORT=""
 DB_NAME=""
