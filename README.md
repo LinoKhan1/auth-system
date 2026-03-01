@@ -53,6 +53,14 @@ auth-system/
 - Ensures authenticated pages redirect to login if user is not logged in
 - Session maintained using HTTP-only cookies set by the backend
 
+### Environment Variables
+
+Set env variables:
+
+```bash
+NEXT_PUBLIC_API_URL=""
+```
+
 ### Run Frontend
 
 ```bash
@@ -72,25 +80,74 @@ npm run dev
 - EF Core migrations for database schema
 - Clean architecture: Presentation → Application → Domain → Infrastructure
 
-### Run Backend
+### Environment Variables
+
+Set env variables:
+
+```bash
+# Database
+DB_HOST=""
+DB_PORT=""
+DB_NAME=""
+DB_USER=""
+DB_PASSWORD=""
+
+# JWT
+JWT_SECRET_KEY=""
+JWT_ISSUER=""
+JWT_AUDIENCE=""
+JWT_EXPIRE_HOURS=""
+```
+
+### Docker Setup
+
+This project includes a Dockerized development environment using `docker-compose.yml`, which manages both the backend API and PostgreSQL database.
+
+#### Services
+
+- **api (ASP.NET Core backend)**
+  - Built from `server/Dockerfile`
+  - Listens on port **8080**
+  - Includes **dotnet-ef CLI** to run **Entity Framework Core migrations** inside the container
+  - `db.Database.Migrate()` is automatically called on startup to ensure tables are created
+
+- **postgres (PostgreSQL database)**
+  - Image: `postgres:18`
+  - Listens on port **5432**
+  - Uses volume `pgdata` to **persist database data**
+  - Can be initialized with SQL scripts in `docker/postgres-init`
+
+#### Key Features
+
+- **Migrations included in Docker image**
+  - Migrations located in `server/Infrastructure/Data/Migrations` are compiled into the published assembly
+  - Allows `dotnet ef database update` or automatic `db.Database.Migrate()` to create/update tables in `authdb`
+
+- **Environment Variables**
+  - Configurable via a `.env` file at the project root
+  - Includes DB connection, JWT settings, and other secrets
+  - Avoids hardcoding sensitive info in `docker-compose.yml`
+
+#### Commands
+
+- **Build images:**  
+
 ```bash
 Build and start backend + PostgreSQL using Docker:
 docker compose up --build
-API will be available at http://localhost:5000.
-Swagger UI available at http://localhost:5000/swagger.
+API will be available at http://localhost:8080.
+Swagger UI available at http://localhost:8080/swagger.
 ```
 
-### Environment Variables
-
-Set in docker-compose.yml:
+#### Run EF Core Migrations
 
 ```bash
-ASPNETCORE_ENVIRONMENT=""
-ConnectionStrings__DefaultConnection=""
-Jwt__Secret=""
-POSTGRES_USER=""
-POSTGRES_PASSWORD=""
-POSTGRES_DB=""
+docker compose run --rm server dotnet ef database update --project server/server.csproj --startup-project server/server.csproj
+```
+- **For Local**  
+```bash
+dotnet restore
+dotnet run
 ```
 
 ### Authentication Flow
@@ -100,15 +157,6 @@ POSTGRES_DB=""
 - Protected endpoint /users/me → backend validates JWT → returns user info.
 - Frontend middleware ensures only authenticated users can access protected pages.
 
-### Docker Setup
-
-docker-compose.yml includes:
-
-- api: ASP.NET Core backend
-- postgres: PostgreSQL database
-- Backend api listens on port 8080.
-- PostgreSQL listens on port 5432.
-- Volume pgdata persists DB data.
 
 ## Technologies Used
 
@@ -140,6 +188,15 @@ docker-compose.yml includes:
 - Unit tests: AuthService, UserService, JWT generation
 - Integration tests (optional): registration → login → protected endpoint
 - Frontend tests can use Jest + React Testing Library
+
+### Run Tests
+
+```bash
+npm run test
+dotnet test
+
+
+```
 
 ## Development Workflow
 
